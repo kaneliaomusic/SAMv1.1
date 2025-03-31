@@ -29,6 +29,10 @@ bool inMenu = true;
 unsigned long lastButtonPress = 0;
 const int DEBOUNCE_DELAY = 200;
 
+// Exit button variables
+unsigned long button1PressStart = 0;
+const unsigned long EXIT_HOLD_TIME = 3000; // 3 seconds
+
 // Game states
 enum GameState { MENU, PONG, TONE_GUESS, TOGGLE_LED };
 GameState currentState = MENU;
@@ -190,6 +194,21 @@ void playPong() {
   up_state |= (digitalRead(UP_BUTTON) == LOW);
   down_state |= (digitalRead(DOWN_BUTTON) == LOW);
 
+  // Check for exit condition
+  if (digitalRead(UP_BUTTON) == LOW) {
+    if (button1PressStart == 0) {
+      button1PressStart = millis();
+    } else if (millis() - button1PressStart >= EXIT_HOLD_TIME) {
+      currentState = MENU;
+      updateMenuDisplay();
+      tone(BUZZER_PIN, 800, 200); // Exit feedback tone
+      button1PressStart = 0;
+      return;
+    }
+  } else {
+    button1PressStart = 0;
+  }
+
   if (time > ball_update) {
     uint8_t new_x = ball_x + ball_dir_x;
     uint8_t new_y = ball_y + ball_dir_y;
@@ -298,6 +317,21 @@ void playPong() {
 
 // Tone Guess functions
 void playToneGuess() {
+  // Check for exit condition
+  if (digitalRead(UP_BUTTON) == LOW) {
+    if (button1PressStart == 0) {
+      button1PressStart = millis();
+    } else if (millis() - button1PressStart >= EXIT_HOLD_TIME) {
+      currentState = MENU;
+      updateMenuDisplay();
+      tone(BUZZER_PIN, 800, 200); // Exit feedback tone
+      button1PressStart = 0;
+      return;
+    }
+  } else {
+    button1PressStart = 0;
+  }
+
   if (tone_game_over) {
     showResults();
     delay(5000);
@@ -307,7 +341,7 @@ void playToneGuess() {
   }
 
   if (waiting_for_guess) {
-    if (digitalRead(UP_BUTTON) == LOW) {
+    if (digitalRead(UP_BUTTON) == LOW && millis() - button1PressStart < EXIT_HOLD_TIME) {
       checkGuess(option_a);
       while (digitalRead(UP_BUTTON) == LOW) delay(10);
       waiting_for_guess = false;
@@ -394,6 +428,21 @@ void resetToneGame() {
 
 // Toggle LED function
 void toggleLED() {
+  // Check for exit condition
+  if (digitalRead(UP_BUTTON) == LOW) {
+    if (button1PressStart == 0) {
+      button1PressStart = millis();
+    } else if (millis() - button1PressStart >= EXIT_HOLD_TIME) {
+      currentState = MENU;
+      updateMenuDisplay();
+      tone(BUZZER_PIN, 800, 200); // Exit feedback tone
+      button1PressStart = 0;
+      return;
+    }
+  } else {
+    button1PressStart = 0;
+  }
+
   digitalWrite(LED_PIN, !digitalRead(LED_PIN)); // Toggle LED state
   display.clearDisplay();
   display.setTextSize(1);
